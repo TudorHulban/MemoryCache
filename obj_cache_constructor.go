@@ -25,7 +25,6 @@ func NewCache(ctx context.Context, domain DomainModel, config ...CacheOption) *I
 		ctx:                    ctx,
 		secondsBetweenCleanUps: 3,
 		cache:                  make(map[int64][]byte),
-		chStop:                 make(chan struct{}),
 	}
 
 	for _, option := range config {
@@ -33,6 +32,8 @@ func NewCache(ctx context.Context, domain DomainModel, config ...CacheOption) *I
 	}
 
 	if res.secondsTTL > 0 {
+		res.chStop = make(chan struct{})
+
 		go res.Clean()
 	}
 
@@ -41,7 +42,10 @@ func NewCache(ctx context.Context, domain DomainModel, config ...CacheOption) *I
 
 // Close releases resources held by the memory cache.
 func (c *InMemoryCache) Close() {
-	// release resources
+	if c.secondsTTL == 0 {
+		return
+	}
 
+	// release resources
 	c.stop()
 }

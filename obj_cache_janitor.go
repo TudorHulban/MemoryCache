@@ -31,21 +31,17 @@ func (c *InMemoryCache) Clean() {
 }
 
 // DeleteExpired deletes expired DTOs.
-func (c *InMemoryCache) DeleteExpired() int {
+func (c *InMemoryCache) DeleteExpired() {
 	now := time.Now()
-	var howManyDeleted int
+
+	c.mu.Lock()
 
 	for keyDTO := range c.cache {
-		c.mu.Lock()
-
 		if c.isTimeExpired(keyDTO, c.secondsTTL, now) {
 			delete(c.cache, keyDTO)
-
-			howManyDeleted++
 		}
 
-		c.mu.Unlock()
 	}
 
-	return howManyDeleted
+	c.mu.Unlock()
 }
