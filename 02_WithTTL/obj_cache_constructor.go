@@ -8,7 +8,6 @@ import (
 // InMemoryCache contains cached domain model data.
 type InMemoryCache struct {
 	domainModel DomainModel
-	ctx         context.Context
 	cache       map[int64][]byte
 
 	mu     sync.Mutex
@@ -21,10 +20,8 @@ type InMemoryCache struct {
 // NewCache is constructor for in memory cache.
 func NewCache(ctx context.Context, domain DomainModel, config ...CacheOption) *InMemoryCache {
 	res := InMemoryCache{
-		domainModel:            domain,
-		ctx:                    ctx,
-		secondsBetweenCleanUps: 3,
-		cache:                  make(map[int64][]byte),
+		domainModel: domain,
+		cache:       make(map[int64][]byte, 100),
 	}
 
 	for _, option := range config {
@@ -34,7 +31,7 @@ func NewCache(ctx context.Context, domain DomainModel, config ...CacheOption) *I
 	if res.secondsTTL > 0 {
 		res.chStop = make(chan struct{})
 
-		go res.Clean()
+		go res.Clean(ctx)
 	}
 
 	return &res

@@ -1,10 +1,11 @@
 package cache
 
 import (
+	"context"
 	"time"
 )
 
-// Stop stops the cleaning of the cache and releases the resources in use.
+// stop stops the cleaning of the cache and releases the resources in use.
 func (c *InMemoryCache) stop() {
 	c.chStop <- struct{}{}
 
@@ -12,12 +13,12 @@ func (c *InMemoryCache) stop() {
 }
 
 // Clean invokes the cache deletion periodically.
-func (c *InMemoryCache) Clean() {
+func (c *InMemoryCache) Clean(ctx context.Context) {
 	ticker := time.NewTicker(time.Duration(c.secondsBetweenCleanUps * uint(time.Second)))
 
 	for {
 		select {
-		case <-c.ctx.Done():
+		case <-ctx.Done():
 			return
 
 		case <-ticker.C:
@@ -40,7 +41,6 @@ func (c *InMemoryCache) DeleteExpired() {
 		if c.isTimeExpired(keyDTO, c.secondsTTL, now) {
 			delete(c.cache, keyDTO)
 		}
-
 	}
 
 	c.mu.Unlock()

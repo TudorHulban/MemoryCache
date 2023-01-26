@@ -1,17 +1,23 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"time"
 )
 
 // Set stores encoded DTO items in memory.
 func (c *InMemoryCache) Set(dto *DTO) error {
+	if dto == nil {
+		return errors.New("passed DTO is nil")
+	}
+
 	c.mu.Lock()
 
 	c.cache[dto.Key] = dto.Data
 
 	c.mu.Unlock()
+
 	return nil
 }
 
@@ -23,6 +29,7 @@ func (c *InMemoryCache) Get(key int64) (*DTO, error) {
 	serializedData, exists := c.cache[key]
 	if !exists {
 		c.mu.Unlock()
+
 		return nil, fmt.Errorf("no cache entry found for key: `%d`", key)
 	}
 
@@ -42,6 +49,7 @@ func (c *InMemoryCache) Delete(key int64) error {
 	delete(c.cache, key)
 
 	c.mu.Unlock()
+
 	return nil
 }
 
